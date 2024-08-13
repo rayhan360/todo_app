@@ -1,16 +1,34 @@
 // src/TodoForm.js
-import { useState, useContext } from "react";
-import { TodoContext } from "./TodoContext";
+import { useState, useContext, useEffect } from "react";
+import { TodoContext } from "./TodoProvider";
 
 const TodoForm = () => {
+  const { state, dispatch } = useContext(TodoContext);
   const [text, setText] = useState("");
-  const { dispatch } = useContext(TodoContext);
 
-  const handleAddTodo = () => {
+  useEffect(() => {
+    if (state.editingTodo) {
+      setText(state.editingTodo.text);
+    }
+  }, [state.editingTodo]);
+
+  const handleAddOrUpdateTodo = () => {
     if (text.trim()) {
-      dispatch({ type: "ADD_TODO", payload: { id: Date.now(), text } });
+      if (state.editingTodo) {
+        dispatch({
+          type: "UPDATE_TODO",
+          payload: { ...state.editingTodo, text },
+        });
+      } else {
+        dispatch({ type: "ADD_TODO", payload: { id: Date.now(), text } });
+      }
       setText("");
     }
+  };
+
+  const handleCancelEdit = () => {
+    setText("");
+    dispatch({ type: "SET_EDITING_TODO", payload: null });
   };
 
   return (
@@ -23,10 +41,18 @@ const TodoForm = () => {
       />
       <button
         className="bg-blue-500 text-white px-4 rounded-r-lg"
-        onClick={handleAddTodo}
+        onClick={handleAddOrUpdateTodo}
       >
-        Add
+        {state.editingTodo ? "Update" : "Add"}
       </button>
+      {state.editingTodo && (
+        <button
+          className="bg-gray-500 text-white px-4 ml-2 rounded-lg"
+          onClick={handleCancelEdit}
+        >
+          Cancel
+        </button>
+      )}
     </div>
   );
 };
